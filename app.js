@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const ejs = require("ejs");
@@ -17,8 +18,10 @@ const userSchema = new mongoose.Schema({
   password: String,
 });
 
-const secret = "thisisourlittlesecret"; //This is encryption key
-userSchema.plugin(encrypt, { secret: secret, encryptedFields: ["password"] }); //User encrypt plugin before creating mongoose model.
+userSchema.plugin(encrypt, {
+  secret: process.env.MY_SECRET,
+  encryptedFields: ["password"],
+}); //User encrypt plugin before creating mongoose model.
 const User = new mongoose.model("user", userSchema);
 
 app.get("/", (req, res) => {
