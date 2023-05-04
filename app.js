@@ -28,6 +28,7 @@ mongoose.connect("mongodb://127.0.0.1:27017/userDB");
 const userSchema = new mongoose.Schema({
   email: String,
   password: String,
+  secret: String,
 });
 userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate);
@@ -140,13 +141,42 @@ app.get("/logout", (req, res) => {
 });
 
 //Secrets Route
-app.route("/secrets").get((req, res) => {
-  if (req.isAuthenticated()) {
-    res.render("secrets");
-  } else {
-    res.redirect("/login");
-  }
-});
+app
+  .route("/secrets")
+  .get((req, res) => {
+    User.find({ secret: { $ne: null } }).then((foundUsers) => {
+      res.render("secrets", { userWithSecrets: foundUsers });
+    });
+  })
+  .post((req, res) => {
+    console.log(req.user);
+    // User.findOneAndUpdate(
+    //   { id: req.user.id },
+    //   { $pull: { secret: req.user.secret } }
+    // );
+  });
+
+app
+  .route("/submit")
+  .get((req, res) => {
+    if (req.isAuthenticated()) {
+      res.render("submit");
+    } else {
+      res.redirect("/login");
+    }
+  })
+  .post((req, res) => {
+    const secret = req.body.secret;
+
+    User.findById(req.user.id).then((foundUser) => {
+      foundUser.secret = secret;
+      foundUser.save().then((rslt) => {
+        if (rslt) {
+          res.redirect("/secrets");
+        }
+      });
+    });
+  });
 
 //Register Route
 app
